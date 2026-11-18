@@ -28,7 +28,7 @@ web-leads-extractor/
 │   ├── .env                                 # Variables de entorno locales (Ignorado por Git)
 │   ├── .env.example                         # Plantilla pública de variables de entorno
 │   └── package.json                         # Dependencias y scripts independientes
-└── README.md                                # [README](https://github.com/oigonzalezp2024/web-leads-extractor/blob/develop/README.md) principal del repositorio
+└── README.md                                # [README] principal del repositorio
 
 ```
 
