@@ -1,0 +1,19 @@
+{
+  "name": "lead-extractor-cell",
+  "version": "1.0.0",
+  "description": "Célula autocontenida para extraer y consolidar leads web dispersos",
+  "main": "src/index.ts",
+"scripts": {
+  "track:leads": "tsx src/index.ts",
+  "export:leads": "tsx src/export-leads.ts"
+},
+  "dependencies": {
+    "@libsql/client": "^0.14.0",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.1",
+    "typescript": "^5.3.3"
+  }
+}
