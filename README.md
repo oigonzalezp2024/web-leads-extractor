@@ -139,3 +139,15 @@ Mientras `scrapeProduct(asin)` devuelva la estructura `ProductSnapshot`, el rest
 - El HTML y las estructuras de Amazon pueden cambiar sin previo aviso.
 - Respeta términos de uso y límites del proveedor de scraping.
 - Este proyecto está orientado a aprendizaje y monitorización técnica.
+
+---
+
+## 🧩 Variantes y Células de la Comunidad
+
+Este repositorio también incluye células autocontenidas e independientes que adaptan la arquitectura base para otros casos de uso sin alterar la lógica original de seguimiento de Amazon.
+
+### Extractor y Consolidador de Datos Web Dispersos (`lead-extractor-cell/`)
+Una célula modular que reutiliza la pila tecnológica base (Node.js, TypeScript y SQLite/libSQL) para rastrear rutas internas de un dominio, extraer leads y datos de contacto de clientes (correos y teléfonos) ocultos en vistas HTML estáticas usando Cheerio y Regex, y consolidar registros sin duplicados localmente.
+
+- **Documentación y Guía Paso a Paso:** [Ver Tutorial del Extractor de Leads](.\docs\lead-extractor-cell\lead-extractor-cell-tutorial.md)
+- **Base de datos:** SQLite local (`clientes_rescatados.db`) mediante `@libsql/client` (Sin dependencias de la nube ni tokens de pago requeridos).

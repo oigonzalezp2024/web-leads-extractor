@@ -30,3 +30,15 @@ pnpm-debug.log*
 
 # keep a single lockfile manager
 package-lock.json
+
+# bases de datos locales y reportes generados
+*.db
+*.db-journal
+*.csv
+
+# Ignorar los datos sensibles, bases de datos y reportes generados
+lead-extractor-cell/data/*.db
+lead-extractor-cell/data/*.csv
+
+# Pero PERMITIR que Git rastree el archivo .gitkeep para mantener la carpeta viva
+!lead-extractor-cell/data/.gitkeep
