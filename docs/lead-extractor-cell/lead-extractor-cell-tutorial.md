@@ -1,117 +1,84 @@
-# Tutorial: Creación de una Célula Autocontenida de Extracción de Leads en el Repositorio
+# Célula Autocontenida de Extracción de Leads (`lead-extractor-cell`)
 
 ## 1. Objetivo
 
-Integrar una variante limpia y autocontenida dentro de una carpeta aislada (`lead-extractor-cell/`) en el repositorio. Esta célula adapta la pila base de Node.js, TypeScript y libSQL del proyecto para rastrear un sitio web, localizar información de contacto de clientes (correos electrónicos y teléfonos) dispersa en distintas vistas HTML estáticas, y consolidar los registros sin duplicados en una base de datos SQLite local, sin modificar el código original ni los flujos existentes.
+Integrar una variante limpia, modular y autocontenida dentro de una carpeta aislada (`lead-extractor-cell/`) en el repositorio [web-leads-extractor](https://github.com/oigonzalezp2024/web-leads-extractor). Esta célula reutiliza la pila base de Node.js, TypeScript y `@libsql/client` para rastrear un sitio web de forma autónoma, localizar información de contacto de clientes (correos electrónicos y teléfonos) dispersa en distintas vistas HTML estáticas, y consolidar los registros sin duplicados en una base de datos SQLite local ubicada de forma segura, exportando posteriormente los resultados a un reporte CSV.
 
 ---
 
 ## 2. Estructura de Directorios
 
-Dentro del repositorio clonado, tu célula aislada se ubica en su propia carpeta:
-
 ```text
-repositorio/
-├── src/                      # Código original intacto
-├── lead-extractor-cell/      # <-- Tu célula variante autocontenida
+web-leads-extractor/
+├── docs/
+│   └── lead-extractor-cell/
+│       └── lead-extractor-cell-tutorial.md  # Documentación detallada
+├── lead-extractor-cell/                     # 📂 Carpeta raíz de la célula
+│   ├── data/                                # 🔒 Carpeta aislada para DB y CSVs (Ignorada por Git)
+│   │   ├── clientes_rescatados.db
+│   │   └── clientes_consolidados.csv
 │   ├── src/
-│   │   ├── client.ts         # Configuración de conexión SQLite / libSQL local
-│   │   ├── schema.ts         # Definición de la tabla client_leads
-│   │   ├── scraper.ts        # Analizador HTML con Cheerio, Regex y rastreador de enlaces
-│   │   └── index.ts          # Orquestador principal (cola de rastreo y persistencia)
-│   ├── .env.example          # Plantilla de variables de entorno para la célula
-│   ├── package.json          # Scripts independientes de la célula
-│   └── README.md             # Documentación específica de la célula
-└── README.md                 # README principal del repositorio
+│   │   ├── db/
+│   │   │   ├── client.ts                    # Configuración de conexión SQLite / libSQL
+│   │   │   └── schema.ts                    # Definición de la tabla client_leads
+│   │   ├── tracker/
+│   │   │   └── scraper.ts                   # Analizador HTML con Cheerio, Regex y rastreador
+│   │   ├── export-leads.ts                  # Módulo de exportación directa a CSV
+│   │   └── index.ts                         # Orquestador principal (cola de rastreo)
+│   ├── .env                                 # Variables de entorno locales (Ignorado por Git)
+│   ├── .env.example                         # Plantilla pública de variables de entorno
+│   └── package.json                         # Dependencias y scripts independientes
+└── README.md                                # [README](https://github.com/oigonzalezp2024/web-leads-extractor/blob/develop/README.md) principal del repositorio
 
 ```
 
 ---
 
-## 3. Guía Paso a Paso
+## 3. Guía Paso a Paso para la Instalación y Uso
 
-### Paso 1: Crear el directorio de la célula e instalar dependencias
+### Paso 1: Configurar la estructura e instalar dependencias
 
-Navega hasta la raíz de tu repositorio clonado, crea la estructura de carpetas e inicializa el paquete junto con sus dependencias:
+Navega hasta la raíz de tu repositorio clonado, accede a la célula e instala las librerías necesarias (`cheerio`, `tsx`, `dotenv` y `@libsql/client`):
 
 ```bash
-mkdir -p lead-extractor-cell/src/db lead-extractor-cell/src/tracker
 cd lead-extractor-cell
-
-```
-
-Crea el archivo `package.json` dentro de `lead-extractor-cell/`:
-
-```json
-{
-  "name": "lead-extractor-cell",
-  "version": "1.0.0",
-  "description": "Célula autocontenida para extraer y consolidar leads web dispersos",
-  "main": "src/index.ts",
-  "scripts": {
-    "track:leads": "tsx src/index.ts"
-  },
-  "dependencies": {
-    "@libsql/client": "^0.14.0",
-    "cheerio": "^1.0.0",
-    "dotenv": "^16.4.5"
-  },
-  "devDependencies": {
-    "tsx": "^4.7.1",
-    "typescript": "^5.3.3"
-  }
-}
-
-```
-
-Instala las dependencias:
-
-```bash
 pnpm install
-pnpm add cheerio tsx dotenv
 
 ```
+
+*(Si pnpm solicita aprobar los builds de `esbuild` durante la instalación, confirma con `Enter`).*
 
 ---
 
-### Paso 2: Configurar las variables de entorno (`.env.example` y `.env`)
+### Paso 2: Configurar las variables de entorno
 
-Crea el archivo `.env.example` dentro de `lead-extractor-cell/`:
+Crea tu archivo `.env` local dentro de `lead-extractor-cell/` basándote en el archivo `.env.example`. Configura la ruta de la base de datos para que apunte automáticamente a la carpeta aislada `data/`:
 
 ```env
-TURSO_DATABASE_URL="file:clientes_rescatados.db"
-TARGET_BASE_URL="https://sitio-de-tu-cliente.com"
-
-```
-
-Duplica el archivo para generar tu `.env` local:
-
-```bash
-cp .env.example .env
+TURSO_DATABASE_URL="file:data/clientes_rescatados.db"
+TARGET_BASE_URL="http://localhost:8080/test-site.html"
 
 ```
 
 ---
 
-### Paso 3: Implementar el cliente de base de datos y el esquema
+### Paso 3: Configurar la Capa de Datos (libSQL)
 
-Crea `src/db/client.ts` dentro de `lead-extractor-cell/src/`:
-
+1. **`src/db/client.ts`**:
+Establece la conexión utilizando la variable de entorno configurada.
 ```typescript
 import 'dotenv/config';
 import { createClient } from '@libsql/client';
 
-const url = process.env.TURSO_DATABASE_URL || 'file:clientes_rescatados.db';
+const url = process.env.TURSO_DATABASE_URL || 'file:data/clientes_rescatados.db';
 
-export const db = createClient({
-  url,
-  // No requiere token de autenticación para uso de archivos SQLite locales
-});
+export const db = createClient({ url });
 
 ```
 
-Crea `src/db/schema.ts` dentro de `lead-extractor-cell/src/`:
 
+2. **`src/db/schema.ts`**:
+Define la estructura de la tabla con restricción de unicidad para evitar duplicados de contactos.
 ```typescript
 import { db } from './client';
 
@@ -131,11 +98,13 @@ export async function initSchema() {
 
 ```
 
+
+
 ---
 
-### Paso 4: Crear el módulo de scraping
+### Paso 4: Implementar el Motor de Scraping y Rastreo
 
-Crea `src/tracker/scraper.ts` dentro de `lead-extractor-cell/src/tracker/`:
+Crea el archivo **`src/tracker/scraper.ts`** para analizar el DOM con `cheerio`, aplicar expresiones regulares para Colombia y extraer enlaces internos del mismo dominio:
 
 ```typescript
 import * as cheerio from 'cheerio';
@@ -158,14 +127,11 @@ export async function analizarPagina(url: string, baseUrl: string): Promise<Resu
 
   const hallazgos: Hallazgo[] = [];
   const enlacesInternos = new Set<string>();
-
-  // Extraer el texto del cuerpo normalizando los espacios
   const textoCompleto = $('body').text().replace(/\s+/g, ' ');
 
   // 1. Extracción de correos electrónicos
   const regexEmail = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
-  const emails = textoCompleto.match(regexEmail) || [];
-  for (const email of new Set(emails)) {
+  for (const email of new Set(textoCompleto.match(regexEmail) || [])) {
     hallazgos.push({
       tipoDato: 'email',
       valor: email.toLowerCase(),
@@ -173,10 +139,9 @@ export async function analizarPagina(url: string, baseUrl: string): Promise<Resu
     });
   }
 
-  // 2. Extracción de teléfonos (soporte para formato Colombia: celular y fijo)
+  // 2. Extracción de teléfonos (Soporte para formato Colombia y estándar)
   const regexTelefono = /(?:\+57\s?)?(?:3\d{2}[\s.-]?\d{3}[\s.-]?\d{4}|\(?0?[1-8]\)?[\s.-]?\d{3}[\s.-]?\d{4})/g;
-  const telefonos = textoCompleto.match(regexTelefono) || [];
-  for (const tel of new Set(telefonos)) {
+  for (const tel of new Set(textoCompleto.match(regexTelefono) || [])) {
     hallazgos.push({
       tipoDato: 'telefono',
       valor: tel.trim(),
@@ -189,39 +154,31 @@ export async function analizarPagina(url: string, baseUrl: string): Promise<Resu
   $('a[href]').each((_, el) => {
     const href = $(el).attr('href');
     if (!href) return;
-
     try {
       const urlAbsoluta = new URL(href, baseUrl);
       if (urlAbsoluta.origin === dominioBase) {
-        urlAbsoluta.hash = ''; // Eliminar fragmentos de anclaje
+        urlAbsoluta.hash = '';
         enlacesInternos.add(urlAbsoluta.href);
       }
-    } catch {
-      // Ignorar esquemas que no sean HTTP (mailto:, tel:, javascript:)
-    }
+    } catch {}
   });
 
-  return {
-    hallazgos,
-    enlacesInternos: Array.from(enlacesInternos),
-  };
+  return { hallazgos, enlacesInternos: Array.from(enlacesInternos) };
 }
 
 function extraerContexto(texto: string, coincidencia: string): string {
   const index = texto.indexOf(coincidencia);
   if (index === -1) return '';
-  const inicio = Math.max(0, index - 45);
-  const fin = Math.min(texto.length, index + coincidencia.length + 45);
-  return texto.slice(inicio, fin).trim();
+  return texto.slice(Math.max(0, index - 45), Math.min(texto.length, index + coincidencia.length + 45)).trim();
 }
 
 ```
 
 ---
 
-### Paso 5: Crear el orquestador principal (`index.ts`)
+### Paso 5: Desarrollar el Orquestador Principal (`src/index.ts`)
 
-Crea `src/index.ts` dentro de `lead-extractor-cell/src/`:
+Controla la cola de rastreo por anchura, respeta límites de seguridad y aplica pausas de cortesía:
 
 ```typescript
 import 'dotenv/config';
@@ -231,15 +188,13 @@ import { analizarPagina } from './tracker/scraper';
 
 async function ejecutarRastreo() {
   const baseUrl = process.env.TARGET_BASE_URL;
-  if (!baseUrl) {
-    throw new Error('Debes definir TARGET_BASE_URL en tu archivo .env');
-  }
+  if (!baseUrl) throw new Error('Define TARGET_BASE_URL en tu archivo .env');
 
   await initSchema();
 
   const visitadas = new Set<string>();
   const cola: string[] = [baseUrl];
-  const limitePaginas = 150; // Límite de seguridad
+  const limitePaginas = 150;
 
   console.log(`[Lead Extractor Cell] Iniciando rastreo en: ${baseUrl}`);
 
@@ -262,13 +217,10 @@ async function ejecutarRastreo() {
       }
 
       for (const enlace of enlacesInternos) {
-        if (!visitadas.has(enlace) && !cola.includes(enlace)) {
-          cola.push(enlace);
-        }
+        if (!visitadas.has(enlace) && !cola.includes(enlace)) cola.push(enlace);
       }
 
-      // Pausa de cortesía de 300ms
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      await new Promise((resolve) => setTimeout(resolve, 300)); // Pausa de cortesía
     } catch (error) {
       console.error(`Error al procesar ${urlActual}:`, error);
     }
@@ -283,18 +235,137 @@ ejecutarRastreo();
 
 ---
 
-### Paso 6: Ejecución y Exportación
+### Paso 6: Crear el Exportador a CSV (`src/export-leads.ts`)
 
-Ejecuta el crawler de la célula mediante su script independiente:
+Extrae los registros consolidados de la base de datos y los deposita ordenadamente dentro de la carpeta aislada `data/`:
 
+```typescript
+import { createClient } from "@libsql/client";
+import dotenv from "dotenv";
+import fs from "fs";
+import path from "path";
+import { initSchema } from "./db/schema";
+
+dotenv.config();
+
+const client = createClient({
+  url: process.env.TURSO_DATABASE_URL || "file:data/clientes_rescatados.db",
+});
+
+async function run() {
+  await initSchema();
+
+  const { rows } = await client.execute("SELECT url_origen, tipo_dato, valor, contexto FROM client_leads;");
+  
+  const csv = [
+    "url_origen,tipo_dato,valor,contexto",
+    ...rows.map(r => `"${r.url_origen}","${r.tipo_dato}","${r.valor}","${r.contexto}"`)
+  ].join("\n");
+
+  const outputPath = path.join("data", "clientes_consolidados.csv");
+  fs.writeFileSync(outputPath, csv, "utf-8");
+  console.log(`¡Exportado con éxito a ${outputPath}!`);
+}
+
+run();
+
+```
+
+---
+
+### Paso 7: Configuración de Scripts y Ejecución
+
+1. **Configura los scripts en el `package.json**` de la célula:
+```json
+"scripts": {
+  "track:leads": "tsx src/index.ts",
+  "export:leads": "tsx src/export-leads.ts"
+}
+
+```
+
+
+2. **Ejecuta el crawler de leads**:
 ```bash
 pnpm track:leads
 
 ```
 
-Una vez finalizado, exporta tu base de datos SQLite a un archivo CSV compatible con Excel:
 
+3. **Exporta el consolidado a CSV**:
 ```bash
-sqlite3 -header -csv clientes_rescatados.db "SELECT url_origen, tipo_dato, valor, contexto FROM client_leads;" > clientes_consolidados.csv
+pnpm export:leads
 
 ```
+
+
+
+---
+
+## 4. Despliegue y Puesta en Marcha
+
+Una vez probada y validada la célula de forma local, tienes dos escenarios principales para ponerla en marcha en producción o servidores de scraping real:
+
+### Escenario A: Puesta en Marcha en Entorno Local o Servidor VPS (Node.js Directo)
+
+Si vas a ejecutar el scraper periódicamente en un servidor propio o máquina dedicada:
+
+1. **Clona o actualiza el repositorio** en el servidor e ingresa a la célula:
+```bash
+cd web-leads-extractor/lead-extractor-cell
+
+```
+
+
+2. **Instala las dependencias**:
+```bash
+pnpm install --frozen-lockfile
+
+```
+
+
+3. **Crea y configura tu archivo `.env` de producción** apuntando al dominio real del cliente:
+```env
+TURSO_DATABASE_URL="file:data/clientes_rescatados.db"
+TARGET_BASE_URL="https://sitio-web-del-cliente.com"
+
+```
+
+
+4. **Ejecuta el ciclo completo**:
+```bash
+pnpm track:leads
+pnpm export:leads
+
+```
+
+
+
+---
+
+### Escenario B: Automatización mediante Cron Job (Ejecución Periódica)
+
+Si deseas que la célula rastree un sitio web automáticamente todas las madrugadas y genere el reporte sin intervención manual:
+
+1. Abre el editor de crontab en tu servidor:
+```bash
+crontab -e
+
+```
+
+
+2. Agrega una tarea programada ajustando las rutas absolutas de tu entorno:
+```cron
+# Ejecutar el extractor de leads todos los días a las 02:00 AM
+0 2 * * * cd /ruta/a/web-leads-extractor/lead-extractor-cell && pnpm track:leads && pnpm export:leads >> /ruta/a/logs/lead-extractor.log 2>&1
+
+```
+
+
+
+---
+
+### Consideraciones Clave de Infraestructura:
+
+* **Aislamiento de Datos:** La base de datos SQLite y el reporte CSV se generan dentro de la carpeta local `data/` (excluida por `.gitignore`), asegurando que tus datos extraídos se mantengan seguros en tu servidor local sin riesgo de sobreescrituras al actualizar el código desde GitHub.
+* **Respeto al Servidor Objetivo (`Rate Limiting`):** El orquestador cuenta por defecto con una pausa de cortesía de `300ms` entre peticiones (`setTimeout`) para evitar saturar el servidor auditado.
