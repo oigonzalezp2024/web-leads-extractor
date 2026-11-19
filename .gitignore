@@ -39,6 +39,7 @@ package-lock.json
 # Ignorar los datos sensibles, bases de datos y reportes generados
 lead-extractor-cell/data/*.db
 lead-extractor-cell/data/*.csv
+lead-extractor-cell/data/*.json
 
 # Pero PERMITIR que Git rastree el archivo .gitkeep para mantener la carpeta viva
 !lead-extractor-cell/data/.gitkeep
