@@ -1,7 +1,7 @@
 import 'dotenv/config';
 import { createClient } from '@libsql/client';
 
-const url = process.env.TURSO_DATABASE_URL || 'file:clientes_rescatados.db';
+const url = process.env.TURSO_DATABASE_URL || 'file:rescued_leads.db';
 
 export const db = createClient({
   url,

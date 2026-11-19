@@ -17,7 +17,7 @@ async function run() {
     ...rows.map(r => `"${r.url_origen}","${r.tipo_dato}","${r.valor}","${r.contexto}"`)
   ].join("\n");
 
-  const outputPath = path.join("data", "clientes_consolidados.csv");
+  const outputPath = path.join("data", "leads.csv");
   fs.writeFileSync(outputPath, csv, "utf-8");
   console.log(`¡Exportado con éxito a ${outputPath}!`);
 }

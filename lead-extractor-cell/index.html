@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Panel de Control · lead-extractor-cell</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #0b1220;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --border: #334155;
+      --accent: #38bdf8;
+      --accent-soft: rgba(56, 189, 248, 0.14);
+      --green: #4ade80;
+      --green-soft: rgba(74, 222, 128, 0.14);
+      --wa: #22c55e;
+      --wa-hover: #16a34a;
+      --wa-soft: rgba(34, 197, 94, 0.15);
+      --amber: #fbbf24;
+      --amber-soft: rgba(251, 191, 36, 0.14);
+      --red: #f87171;
+      --red-soft: rgba(248, 113, 113, 0.15);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 1.25rem;
+    }
+
+    .container { max-width: 1240px; margin: 0 auto; }
+
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    h1 { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+    .subtitle { color: var(--muted); font-size: 0.9rem; margin-top: 0.25rem; }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.35rem 0.75rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--muted);
+    }
+
+    .status-pill.running {
+      color: var(--amber);
+      border-color: rgba(251, 191, 36, 0.4);
+      background: var(--amber-soft);
+    }
+
+    .status-pill.done {
+      color: var(--green);
+      border-color: rgba(74, 222, 128, 0.4);
+      background: var(--green-soft);
+    }
+
+    .status-pill.error {
+      color: var(--red);
+      border-color: rgba(248, 113, 113, 0.4);
+      background: var(--red-soft);
+    }
+
+    .fn-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.85rem;
+      padding: 1rem;
+      margin-bottom: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.8rem;
+    }
+
+    .fn-buttons, .analyze-box {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      align-items: center;
+    }
+
+    .mini-input {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 0.55rem;
+      padding: 0.52rem 0.75rem;
+      font-size: 0.85rem;
+      min-width: 220px;
+    }
+
+    button, label.btn, a.btn-link {
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 0.6rem;
+      padding: 0.56rem 0.88rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+
+    button:hover:not(:disabled), label.btn:hover, a.btn-link:hover {
+      border-color: var(--accent);
+      background: var(--accent-soft);
+    }
+
+    button:disabled { opacity: 0.55; cursor: not-allowed; }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #082f49;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #7dd3fc;
+      border-color: #7dd3fc;
+    }
+
+    .btn-run {
+      background: var(--green-soft);
+      color: var(--green);
+      border-color: rgba(74, 222, 128, 0.35);
+    }
+
+    input[type="file"] { display: none; }
+
+    .console-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .console-out {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 0.6rem;
+      padding: 0.75rem 0.9rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.8rem;
+      color: #cbd5e1;
+      height: 190px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+    }
+
+    .log-err { color: var(--red); }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem;
+      padding: 0.85rem 1rem;
+    }
+
+    .stat-label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; }
+    .stat-value { font-size: 1.3rem; font-weight: 700; margin-top: 0.15rem; word-break: break-word; }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .search-input {
+      flex: 1 1 280px;
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 0.6rem;
+      padding: 0.62rem 0.9rem;
+      font-size: 0.92rem;
+    }
+
+    .table-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 0.85rem;
+      overflow-x: auto;
+    }
+
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.88rem; }
+    th, td { padding: 0.75rem 0.9rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+
+    thead tr.col-headers th {
+      background: var(--surface-2);
+      color: var(--muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    thead tr.col-filters th {
+      background: #131c2e;
+      padding: 0.5rem 0.75rem;
+      vertical-align: middle;
+    }
+
+    .th-filter-input,
+    .th-filter-select {
+      width: 100%;
+      min-width: 115px;
+      background: var(--surface-2);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 0.45rem;
+      padding: 0.36rem 0.5rem;
+      font-size: 0.78rem;
+      outline: none;
+    }
+
+    .th-filter-input:focus,
+    .th-filter-select:focus {
+      border-color: var(--accent);
+    }
+
+    tr:last-child td { border-bottom: none; }
+
+    .badges { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .badge {
+      display: inline-flex;
+      padding: 0.22rem 0.52rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    .badge-cel { background: var(--green-soft); color: var(--green); border: 1px solid rgba(74, 222, 128, 0.3); }
+    .badge-tel { background: var(--accent-soft); color: var(--accent); border: 1px solid rgba(56, 189, 248, 0.3); }
+    .badge-mail { background: rgba(168, 85, 247, 0.15); color: #d8b4fe; border: 1px solid rgba(168, 85, 247, 0.3); }
+    .badge-empty { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(251, 191, 36, 0.3); }
+
+    .wa-actions { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .btn-wa {
+      background: var(--wa);
+      color: #052e16;
+      border: 1px solid var(--wa);
+      border-radius: 0.5rem;
+      padding: 0.32rem 0.6rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+    .btn-wa:hover { background: var(--wa-hover); color: #fff; }
+    .btn-wa-disabled {
+      background: var(--wa-soft);
+      color: var(--muted);
+      border: 1px dashed var(--border);
+      border-radius: 0.5rem;
+      padding: 0.32rem 0.6rem;
+      font-size: 0.76rem;
+    }
+
+    .url-link { color: var(--accent); text-decoration: none; word-break: break-all; }
+    .raw-snippet {
+      max-width: 240px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.75rem;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty-state { text-align: center; padding: 2.25rem 1rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <div>
+        <h1>Panel de Control · lead-extractor-cell</h1>
+        <p class="subtitle">Observa en tiempo real cómo se rastrea, analiza, exporta y consolida cada lead.</p>
+      </div>
+      <span id="estadoBadge" class="status-pill">Listo</span>
+    </header>
+
+    <section class="fn-panel" aria-label="Acciones del sistema">
+      <div class="fn-buttons">
+        <button type="button" id="btnTrack" class="btn-run">1. Rastrear Leads (track:leads)</button>
+        <button type="button" id="btnExport" class="btn-run">2. Exportar CSV (export:leads)</button>
+        <a class="btn-link" href="/api/download-csv">Descargar CSV</a>
+        <button type="button" id="btnRecargar" class="btn-primary">Recargar Datos</button>
+        <button type="button" id="btnCopiarTodos">Copiar Celulares</button>
+        <label class="btn" for="archivoJson">Cargar JSON</label>
+        <input type="file" id="archivoJson" accept=".json,application/json" />
+      </div>
+
+      <div class="analyze-box">
+        <select id="inputAnalyzeFile" class="mini-input" aria-label="Archivo a analizar">
+          <option value="--" selected>-- vacio --</option>
+        </select>
+        <button type="button" id="btnAnalyze">3. Analizar Archivo (analyze:leads)</button>
+      </div>
+
+      <div class="analyze-box">
+        <input
+          type="text"
+          id="inputTargetUrl"
+          class="mini-input"
+          value="http://localhost:8080/test-site.html"
+          placeholder="TARGET_BASE_URL"
+        />
+        <button type="button" id="btnSetTarget">Aplicar URL Objetivo</button>
+        <button type="button" id="btnPhpStart">Levantar PHP (:8080)</button>
+        <button type="button" id="btnPhpStop">Detener PHP</button>
+      </div>
+
+      <div class="console-header">
+        <span>Salida en vivo del proceso</span>
+        <button type="button" id="btnLimpiarConsola" style="padding: 0.25rem 0.55rem; font-size: 0.76rem;">Limpiar consola</button>
+      </div>
+      <div class="console-out" id="consolaSalida">Esperando acción...</div>
+    </section>
+
+    <section class="stats">
+      <div class="stat-card">
+        <div class="stat-label">Registros</div>
+        <div class="stat-value" id="statRegistros">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Celulares</div>
+        <div class="stat-value" id="statCelulares">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Teléfonos únicos</div>
+        <div class="stat-value" id="statTelefonos">0</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Fuente activa</div>
+        <div class="stat-value" id="statFuente" style="font-size: 0.9rem;">—</div>
+      </div>
+    </section>
+
+    <section class="toolbar">
+      <input
+        type="search"
+        id="buscador"
+        class="search-input"
+        placeholder="Búsqueda global (URL, celular, teléfono, correo o contenido)..."
+        autocomplete="off"
+      />
+      <button type="button" id="btnLimpiarFiltros">Limpiar filtros de columnas</button>
+    </section>
+
+    <section class="table-wrap">
+      <table>
+        <thead>
+          <tr class="col-headers">
+            <th>URL</th>
+            <th>Celulares</th>
+            <th>Teléfonos</th>
+            <th>Correos</th>
+            <th>WhatsApp</th>
+            <th>Detalle</th>
+          </tr>
+          <tr class="col-filters">
+            <th>
+              <input type="search" id="filtroUrl" class="th-filter-input" placeholder="Filtrar URL..." autocomplete="off" />
+            </th>
+            <th>
+              <select id="filtroCelularModo" class="th-filter-select" aria-label="Filtrar por celular">
+                <option value="todos">Todos</option>
+                <option value="con">Con celular</option>
+                <option value="sin">Sin celular</option>
+              </select>
+            </th>
+            <th>
+              <input type="search" id="filtroTelefono" class="th-filter-input" placeholder="Filtrar teléfono..." autocomplete="off" />
+            </th>
+            <th>
+              <select id="filtroCorreoModo" class="th-filter-select" aria-label="Filtrar por correo">
+                <option value="todos">Todos</option>
+                <option value="con">Con correo</option>
+                <option value="sin">Sin correo</option>
+                <option value="gmail">Solo @gmail.com</option>
+              </select>
+            </th>
+            <th>
+              <select id="filtroWaModo" class="th-filter-select" aria-label="Filtrar por WhatsApp">
+                <option value="todos">Todos</option>
+                <option value="disponible">Disponible</option>
+                <option value="nodisp">No disponible</option>
+              </select>
+            </th>
+            <th>
+              <input type="search" id="filtroDetalle" class="th-filter-input" placeholder="Filtrar detalle..." autocomplete="off" />
+            </th>
+          </tr>
+        </thead>
+        <tbody id="cuerpoTabla">
+          <tr><td colspan="6" class="empty-state">Cargando registros...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+
+  <script>
+    let registros = [];
+
+    const cuerpoTabla = document.getElementById("cuerpoTabla");
+    const buscador = document.getElementById("buscador");
+    const filtroUrl = document.getElementById("filtroUrl");
+    const filtroCelularModo = document.getElementById("filtroCelularModo");
+    const filtroTelefono = document.getElementById("filtroTelefono");
+    const filtroCorreoModo = document.getElementById("filtroCorreoModo");
+    const filtroWaModo = document.getElementById("filtroWaModo");
+    const filtroDetalle = document.getElementById("filtroDetalle");
+    const btnLimpiarFiltros = document.getElementById("btnLimpiarFiltros");
+
+    const consolaSalida = document.getElementById("consolaSalida");
+    const estadoBadge = document.getElementById("estadoBadge");
+    const btnTrack = document.getElementById("btnTrack");
+    const btnExport = document.getElementById("btnExport");
+    const btnAnalyze = document.getElementById("btnAnalyze");
+    const btnRecargar = document.getElementById("btnRecargar");
+    const btnCopiarTodos = document.getElementById("btnCopiarTodos");
+    const btnSetTarget = document.getElementById("btnSetTarget");
+    const btnPhpStart = document.getElementById("btnPhpStart");
+    const btnPhpStop = document.getElementById("btnPhpStop");
+    const btnLimpiarConsola = document.getElementById("btnLimpiarConsola");
+    const archivoJson = document.getElementById("archivoJson");
+    const inputAnalyzeFile = document.getElementById("inputAnalyzeFile");
+    const inputTargetUrl = document.getElementById("inputTargetUrl");
+
+    function setEstado(tipo, texto) {
+      estadoBadge.className = `status-pill ${tipo || ""}`;
+      estadoBadge.textContent = texto;
+    }
+
+    function appendLog(linea, esError = false) {
+      if (consolaSalida.textContent === "Esperando acción...") {
+        consolaSalida.textContent = "";
+      }
+      const div = document.createElement("div");
+      if (esError) div.className = "log-err";
+      div.textContent = linea;
+      consolaSalida.appendChild(div);
+      consolaSalida.scrollTop = consolaSalida.scrollHeight;
+    }
+
+    function escaparHTML(texto = "") {
+      return String(texto)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    }
+
+    function construirUrlWhatsApp(numeroRaw, urlOrigen = "") {
+      const digitos = String(numeroRaw || "").replace(/\D/g, "");
+      if (!digitos) return null;
+      const numeroWa = digitos.length === 10 && digitos.startsWith("3") ? `57${digitos}` : digitos;
+      if (numeroWa.length < 10 || numeroWa.length > 15) return null;
+      const msg = urlOrigen
+        ? `Hola, vi su contacto en ${urlOrigen} y quisiera más información.`
+        : "Hola, quisiera más información.";
+      return `https://wa.me/${numeroWa}?text=${encodeURIComponent(msg)}`;
+    }
+
+    function construirUrlGmail(correoDestino, urlOrigen = "") {
+      const destino = String(correoDestino || "").trim();
+      if (!destino) return null;
+
+      const asunto = urlOrigen
+        ? `Información desde ${urlOrigen}`
+        : "Información comercial";
+
+      const cuerpo = urlOrigen
+        ? `Hola,\n\nEncontré su contacto en ${urlOrigen} y quisiera más información.\n\nSaludos.`
+        : "Hola,\n\nQuisiera más información.\n\nSaludos.";
+
+      const params = new URLSearchParams({
+        view: "cm",
+        fs: "1",
+        to: destino,
+        su: asunto,
+        body: cuerpo,
+      });
+
+      return `https://mail.google.com/mail/?${params.toString()}`;
+    }
+
+    function tieneWhatsappDisponible(item) {
+      const urlSegura = item.url && /^https?:\/\//i.test(item.url) ? item.url : "";
+      const numsWa = Array.from(new Set([...(item.celulares || []), ...(item.telefonos || [])]));
+      return numsWa.some((n) => Boolean(construirUrlWhatsApp(n, urlSegura)));
+    }
+
+    function actualizarStats(lista, fuenteTexto) {
+      const cels = new Set();
+      const tels = new Set();
+      for (const r of lista) {
+        (r.celulares || []).forEach((c) => cels.add(c));
+        (r.telefonos || []).forEach((t) => tels.add(t));
+      }
+      document.getElementById("statRegistros").textContent = String(lista.length);
+      document.getElementById("statCelulares").textContent = String(cels.size);
+      document.getElementById("statTelefonos").textContent = String(tels.size);
+      if (fuenteTexto) document.getElementById("statFuente").textContent = fuenteTexto;
+    }
+
+    function renderizarTabla() {
+      const q = buscador.value.trim().toLowerCase();
+      const fUrl = filtroUrl.value.trim().toLowerCase();
+      const fCelModo = filtroCelularModo.value;
+      const fTel = filtroTelefono.value.trim().toLowerCase();
+      const fMailModo = filtroCorreoModo.value;
+      const fWaModo = filtroWaModo.value;
+      const fDet = filtroDetalle.value.trim().toLowerCase();
+
+      const filtrados = registros.filter((item) => {
+        const url = (item.url || "").toLowerCase();
+        const raw = (item.linea_original || "").toLowerCase();
+        const cels = item.celulares || [];
+        const tels = item.telefonos || [];
+        const mails = item.correos || [];
+        const waDisp = tieneWhatsappDisponible(item);
+
+        if (q) {
+          const coincideGlobal =
+            url.includes(q) ||
+            raw.includes(q) ||
+            tels.join(" ").toLowerCase().includes(q) ||
+            cels.join(" ").toLowerCase().includes(q) ||
+            mails.join(" ").toLowerCase().includes(q);
+          if (!coincideGlobal) return false;
+        }
+
+        if (fUrl && !url.includes(fUrl)) return false;
+
+        if (fCelModo === "con" && cels.length === 0) return false;
+        if (fCelModo === "sin" && cels.length > 0) return false;
+
+        if (fTel && !tels.join(" ").toLowerCase().includes(fTel)) return false;
+
+        if (fMailModo === "con" && mails.length === 0) return false;
+        if (fMailModo === "sin" && mails.length > 0) return false;
+        if (fMailModo === "gmail" && !mails.some((m) => m.toLowerCase().endsWith("@gmail.com"))) return false;
+
+        if (fWaModo === "disponible" && !waDisp) return false;
+        if (fWaModo === "nodisp" && waDisp) return false;
+
+        if (fDet && !raw.includes(fDet)) return false;
+
+        return true;
+      });
+
+      actualizarStats(filtrados);
+
+      if (filtrados.length === 0) {
+        cuerpoTabla.innerHTML = `<tr><td colspan="6" class="empty-state">No hay registros que coincidan con los filtros.</td></tr>`;
+        return;
+      }
+
+      cuerpoTabla.innerHTML = filtrados
+        .map((item) => {
+          const urlSegura = item.url && /^https?:\/\//i.test(item.url) ? item.url : "";
+          const celdaUrl = urlSegura
+            ? `<a class="url-link" href="${escaparHTML(urlSegura)}" target="_blank" rel="noopener noreferrer">${escaparHTML(urlSegura)}</a>`
+            : `<span style="color: var(--muted)">Sin URL</span>`;
+
+          const celulares = item.celulares || [];
+          const celdaCel = celulares.length
+            ? `<div class="badges">${celulares.map((c) => `<a class="badge badge-cel" href="tel:${escaparHTML(c)}">${escaparHTML(c)}</a>`).join("")}</div>`
+            : `<span class="badge badge-empty">Sin celular</span>`;
+
+          const telefonos = item.telefonos || [];
+          const celdaTel = telefonos.length
+            ? `<div class="badges">${telefonos.map((t) => `<a class="badge badge-tel" href="tel:${escaparHTML(t)}">${escaparHTML(t)}</a>`).join("")}</div>`
+            : `<span style="color: var(--muted)">—</span>`;
+
+          const correos = item.correos || [];
+          const celdaMail = correos.length
+            ? `<div class="badges">${correos
+                .map((m) => {
+                  const gmailLink = construirUrlGmail(m, urlSegura);
+                  return `<a class="badge badge-mail" href="${escaparHTML(gmailLink || `mailto:${m}`)}" target="_blank" rel="noopener noreferrer" title="Enviar por Gmail a ${escaparHTML(m)}">${escaparHTML(m)}</a>`;
+                })
+                .join("")}</div>`
+            : `<span style="color: var(--muted)">—</span>`;
+
+          const numsWa = Array.from(new Set([...celulares, ...telefonos]));
+          const waBtns = numsWa
+            .map((n) => {
+              const link = construirUrlWhatsApp(n, urlSegura);
+              return link ? `<a class="btn-wa" href="${escaparHTML(link)}" target="_blank" rel="noopener noreferrer">WhatsApp · ${escaparHTML(n)}</a>` : "";
+            })
+            .filter(Boolean);
+
+          const celdaWa = waBtns.length
+            ? `<div class="wa-actions">${waBtns.join("")}</div>`
+            : `<span class="btn-wa-disabled">No disponible</span>`;
+
+          return `
+            <tr>
+              <td>${celdaUrl}</td>
+              <td>${celdaCel}</td>
+              <td>${celdaTel}</td>
+              <td>${celdaMail}</td>
+              <td>${celdaWa}</td>
+              <td><div class="raw-snippet" title="${escaparHTML(item.linea_original || "")}">${escaparHTML(item.linea_original || "")}</div></td>
+            </tr>
+          `;
+        })
+        .join("");
+    }
+
+    async function cargarArchivosData() {
+      try {
+        const res = await fetch("/api/data-files", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!Array.isArray(data.files) || data.files.length === 0) return;
+
+        const valorActual = inputAnalyzeFile.value;
+        inputAnalyzeFile.innerHTML = data.files
+          .map(
+            (f) =>
+              `<option value="${escaparHTML(f)}"${f === valorActual ? " selected" : ""}>${escaparHTML(f)}</option>`
+          )
+          .join("");
+      } catch {
+        // Mantiene las opciones iniciales si el endpoint no responde
+      }
+    }
+
+    async function cargarLeads() {
+      try {
+        const res = await fetch("/api/leads", { cache: "no-store" });
+        const payload = await res.json();
+        registros = Array.isArray(payload.items) ? payload.items : [];
+        if (payload.targetUrl && document.activeElement !== inputTargetUrl) {
+          inputTargetUrl.value = payload.targetUrl;
+        }
+        actualizarStats(registros, payload.fuente || "local");
+        renderizarTabla();
+      } catch (err) {
+        appendLog(`Error al cargar /api/leads: ${err.message}`, true);
+      }
+    }
+
+    function procesarBloqueSSE(bloque) {
+      const lineas = bloque.split(/\r?\n/);
+      let eventName = "message";
+      const dataLines = [];
+
+      for (const l of lineas) {
+        if (l.startsWith("event:")) {
+          eventName = l.slice(6).trim();
+        } else if (l.startsWith("data:")) {
+          dataLines.push(l.slice(5).trim());
+        }
+      }
+
+      if (!dataLines.length) return;
+      let payload = {};
+      try {
+        payload = JSON.parse(dataLines.join("\n"));
+      } catch {
+        payload = { line: dataLines.join("\n") };
+      }
+
+      if (eventName === "status") {
+        setEstado("running", "Trabajando...");
+        appendLog(payload.message || "Ejecutando...");
+      } else if (eventName === "log") {
+        appendLog(payload.line || "", payload.canal === "stderr");
+      } else if (eventName === "done") {
+        appendLog(payload.message || "Finalizado.", !payload.ok);
+        setEstado(payload.ok ? "done" : "error", payload.ok ? "Completado" : "Error");
+      }
+    }
+
+    async function ejecutarStream(endpoint, bodyObj = {}) {
+      const botones = [btnTrack, btnExport, btnAnalyze, btnRecargar, btnSetTarget, btnPhpStart, btnPhpStop];
+      botones.forEach((b) => (b.disabled = true));
+      setEstado("running", "Trabajando...");
+
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bodyObj),
+        });
+
+        if (!res.body) {
+          const txt = await res.text();
+          appendLog(txt);
+          return;
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const partes = buffer.split(/\r?\n\r?\n/);
+          buffer = partes.pop() || "";
+          for (const parte of partes) {
+            if (parte.trim()) procesarBloqueSSE(parte);
+          }
+        }
+
+        if (buffer.trim()) procesarBloqueSSE(buffer);
+        await cargarArchivosData();
+        await cargarLeads();
+      } catch (err) {
+        appendLog(`Error de conexión en stream: ${err.message}`, true);
+        setEstado("error", "Error");
+      } finally {
+        botones.forEach((b) => (b.disabled = false));
+      }
+    }
+
+    async function ejecutarAccionRapida(endpoint, bodyObj = {}) {
+      setEstado("running", "Ejecutando...");
+      try {
+        const res = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(bodyObj),
+        });
+        const data = await res.json();
+        appendLog(data.output || "Listo.", !data.ok);
+        setEstado(data.ok ? "done" : "error", data.ok ? "Completado" : "Error");
+        await cargarLeads();
+      } catch (err) {
+        appendLog(`Error: ${err.message}`, true);
+        setEstado("error", "Error");
+      }
+    }
+
+    btnTrack.addEventListener("click", () => ejecutarStream("/api/stream/track"));
+    btnExport.addEventListener("click", () => ejecutarStream("/api/stream/export"));
+    btnAnalyze.addEventListener("click", () =>
+      ejecutarStream("/api/stream/analyze", {
+        input: inputAnalyzeFile.value || "./data/motors.csv",
+        output: "./data/output.json",
+      })
+    );
+
+    btnSetTarget.addEventListener("click", () =>
+      ejecutarAccionRapida("/api/actions/target", {
+        targetUrl: inputTargetUrl.value.trim(),
+      })
+    );
+    btnPhpStart.addEventListener("click", () =>
+      ejecutarAccionRapida("/api/actions/php-start", { docroot: "." })
+    );
+    btnPhpStop.addEventListener("click", () =>
+      ejecutarAccionRapida("/api/actions/php-stop")
+    );
+    btnRecargar.addEventListener("click", async () => {
+      setEstado("running", "Actualizando...");
+      await cargarArchivosData();
+      await cargarLeads();
+      setEstado("done", "Actualizado");
+    });
+
+    btnLimpiarConsola.addEventListener("click", () => {
+      consolaSalida.textContent = "Esperando acción...";
+      setEstado("", "Listo");
+    });
+
+    btnLimpiarFiltros.addEventListener("click", () => {
+      buscador.value = "";
+      filtroUrl.value = "";
+      filtroCelularModo.value = "todos";
+      filtroTelefono.value = "";
+      filtroCorreoModo.value = "todos";
+      filtroWaModo.value = "todos";
+      filtroDetalle.value = "";
+      renderizarTabla();
+    });
+
+    btnCopiarTodos.addEventListener("click", async () => {
+      const lista = Array.from(new Set(registros.flatMap((r) => r.celulares || [])));
+      if (!lista.length) return appendLog("No hay celulares para copiar.");
+      await navigator.clipboard.writeText(lista.join("\n"));
+      appendLog(`Copiados ${lista.length} celulares al portapapeles.`);
+    });
+
+    archivoJson.addEventListener("change", async (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const parsed = JSON.parse(await file.text());
+        if (!Array.isArray(parsed)) throw new Error("El JSON debe ser un arreglo.");
+        registros = parsed;
+        actualizarStats(registros, file.name);
+        renderizarTabla();
+        appendLog(`Cargado ${file.name} (${parsed.length} registros).`);
+        setEstado("done", "JSON Cargado");
+      } catch (err) {
+        appendLog(`Error leyendo JSON: ${err.message}`, true);
+        setEstado("error", "Error");
+      }
+    });
+
+    [buscador, filtroUrl, filtroCelularModo, filtroTelefono, filtroCorreoModo, filtroWaModo, filtroDetalle].forEach((el) => {
+      el.addEventListener("input", renderizarTabla);
+      el.addEventListener("change", renderizarTabla);
+    });
+
+    void cargarArchivosData();
+    void cargarLeads();
+  </script>
+</body>
+</html>

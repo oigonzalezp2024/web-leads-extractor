@@ -53,7 +53,7 @@ cp .env.example .env
 Asegúrate de que los parámetros queden configurados de la siguiente manera para apuntar a la carpeta segura de datos y al servidor local:
 
 ```env
-TURSO_DATABASE_URL="file:data/clientes_rescatados.db"
+TURSO_DATABASE_URL="file:data/rescued_leads.db"
 TARGET_BASE_URL="http://localhost:8080/test-site.html"
 
 ```
@@ -86,7 +86,7 @@ pnpm track:leads
 
 **¿Qué sucede en este paso?**
 
-* Se inicializa automáticamente el esquema de la base de datos SQLite en `data/clientes_rescatados.db` (utilizando la carpeta segura protegida por el `.gitkeep`).
+* Se inicializa automáticamente el esquema de la base de datos SQLite en `data/rescued_leads.db` (utilizando la carpeta segura protegida por el `.gitkeep`).
 * El orquestador recorre de forma autónoma las vistas enlazadas (`test-site.html`, `nosotros.html`, `servicios.html`, `contacto.html`, etc.).
 * Extrae y limpia los correos y teléfonos aplicando pausas de cortesía de `300ms` entre peticiones.
 
@@ -101,7 +101,7 @@ pnpm export:leads
 
 ```
 
-El archivo resultante se almacenará de forma limpia y ordenada en la ruta **`data/clientes_consolidados.csv`**, listo para ser abierto en cualquier hoja de cálculo o software de gestión.
+El archivo resultante se almacenará de forma limpia y ordenada en la ruta **`data/leads.csv`**, listo para ser abierto en cualquier hoja de cálculo o software de gestión.
 
 ---
 

@@ -3,10 +3,12 @@
   "version": "1.0.0",
   "description": "Célula autocontenida para extraer y consolidar leads web dispersos",
   "main": "src/index.ts",
-"scripts": {
-  "track:leads": "tsx src/index.ts",
-  "export:leads": "tsx src/export-leads.ts"
-},
+  "scripts": {
+    "track:leads": "tsx src/index.ts",
+    "export:leads": "tsx src/export-leads.ts",
+    "analyze:leads": "tsx src/analyze-leads.ts",
+    "view:leads": "tsx src/server.ts"
+  },
   "dependencies": {
     "@libsql/client": "^0.14.0",
     "cheerio": "^1.0.0",
