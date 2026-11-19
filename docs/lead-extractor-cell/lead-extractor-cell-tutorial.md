@@ -15,8 +15,8 @@ web-leads-extractor/
 │       └── lead-extractor-cell-tutorial.md  # Documentación detallada
 ├── lead-extractor-cell/                     # 📂 Carpeta raíz de la célula
 │   ├── data/                                # 🔒 Carpeta aislada para DB y CSVs (Ignorada por Git)
-│   │   ├── clientes_rescatados.db
-│   │   └── clientes_consolidados.csv
+│   │   ├── rescued_leads.db
+│   │   └── leads.csv
 │   ├── src/
 │   │   ├── db/
 │   │   │   ├── client.ts                    # Configuración de conexión SQLite / libSQL
@@ -55,7 +55,7 @@ pnpm install
 Crea tu archivo `.env` local dentro de `lead-extractor-cell/` basándote en el archivo `.env.example`. Configura la ruta de la base de datos para que apunte automáticamente a la carpeta aislada `data/`:
 
 ```env
-TURSO_DATABASE_URL="file:data/clientes_rescatados.db"
+TURSO_DATABASE_URL="file:data/rescued_leads.db"
 TARGET_BASE_URL="http://localhost:8080/test-site.html"
 
 ```
@@ -70,7 +70,7 @@ Establece la conexión utilizando la variable de entorno configurada.
 import 'dotenv/config';
 import { createClient } from '@libsql/client';
 
-const url = process.env.TURSO_DATABASE_URL || 'file:data/clientes_rescatados.db';
+const url = process.env.TURSO_DATABASE_URL || 'file:data/rescued_leads.db';
 
 export const db = createClient({ url });
 
@@ -249,7 +249,7 @@ import { initSchema } from "./db/schema";
 dotenv.config();
 
 const client = createClient({
-  url: process.env.TURSO_DATABASE_URL || "file:data/clientes_rescatados.db",
+  url: process.env.TURSO_DATABASE_URL || "file:data/rescued_leads.db",
 });
 
 async function run() {
@@ -262,7 +262,7 @@ async function run() {
     ...rows.map(r => `"${r.url_origen}","${r.tipo_dato}","${r.valor}","${r.contexto}"`)
   ].join("\n");
 
-  const outputPath = path.join("data", "clientes_consolidados.csv");
+  const outputPath = path.join("data", "leads.csv");
   fs.writeFileSync(outputPath, csv, "utf-8");
   console.log(`¡Exportado con éxito a ${outputPath}!`);
 }
@@ -326,7 +326,7 @@ pnpm install --frozen-lockfile
 
 3. **Crea y configura tu archivo `.env` de producción** apuntando al dominio real del cliente:
 ```env
-TURSO_DATABASE_URL="file:data/clientes_rescatados.db"
+TURSO_DATABASE_URL="file:data/rescued_leads.db"
 TARGET_BASE_URL="https://sitio-web-del-cliente.com"
 
 ```
